@@ -1,0 +1,5 @@
+# Binary files
+*.o
+
+# Image files
+*.img
