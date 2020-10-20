@@ -4,6 +4,9 @@ boot: boot.o
 boot.o: boot.s
 	as -o boot.o boot.s
 
+test: boot
+	bash run.sh
+
 clean:
 	rm -f boot boot.o
 
