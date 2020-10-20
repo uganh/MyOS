@@ -1,0 +1,64 @@
+----------------------------
+Output: INT 0x10, AH = 0x13
+----------------------------
+
+Parameter:
+    AH      0x13
+    AL      Attribute of cursor and characters
+                - 0: Attribute of characters in BL, cursor move to head
+                - 1: Attribute of characters in BL, cursor move to tail
+                - 2: Attribute of characters in string, cursor move to head
+                - 2: Attribute of characters in string, cursor move to tail
+    BL      Attribute of characters if AL = 0/1
+    CX      Length of string
+    DH      Row
+    DL      Col
+    ES:BP   Address of string
+
+----------------------------
+Set Focus: INT 0x10, AH = 0x02
+----------------------------
+
+Parameter:
+    AH      0x02
+    DH      Row
+    DL      Col
+    BH      Page
+
+----------------------------
+Clear Screen: INT 0x10, AH = 0x06
+----------------------------
+
+Parameter:
+    AH      0x06
+    AL      0
+    CH      Left-up row
+    CL      Left-up col
+    DH      Right-down row
+    DL      Right-down col
+    BH      Attribute
+
+----------------------------
+Load Disk: INT 0x13, AH = 0x02
+----------------------------
+
+Parameter:
+    AH      0x02
+    AL      The number of sectors to be read
+    CH      Cylinder [0, 79]
+    CL      Sector   [1, 18]
+    DH      Head     [0, 1 ]
+    DL      Driver: 0x0~0x7f for floppy, 0x80~0xff for hard disk
+    ES:BX   The buffer address
+
+Return:
+    CF = 0  Success, AH = 0, AL saves the number of sectors
+    CF = 1  Failure, AH saves status code
+
+----------------------------
+Reset Disk: INT 0x13, AH = 0x00
+----------------------------
+
+Parameter:
+    AH      0x00
+    DL      Driver: 0x0~0x7f for floppy, 0x80~0xff for hard disk
