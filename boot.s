@@ -63,8 +63,8 @@ Boot:
     # Display
     movb    $0x13,  %ah
     movb    $0x01,  %al
-    movw    $msg,   %bp
-    movw    len,    %cx
+    movw    $Msg,   %bp
+    movw    Len,    %cx
     movb    $0x02,  %bl
     movw    $0,     %dx
     movb    $0,     %dl
@@ -79,13 +79,13 @@ Boot:
     jmp     .
 
     # Data
-msg:
+Msg:
     .ascii  "Hello, world."
 
-len:
-    .word   . - msg
+Len:
+    .word   . - Msg
 
     # Padding
-    . = 0x1fe
+    .org    510
 
     .word   0xaa55
