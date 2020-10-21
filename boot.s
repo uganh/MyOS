@@ -86,24 +86,12 @@ CompareFilename:
     # Test file
     testb   $0x20,  11(%si)
     jz      1f
-    # DEBUG
-    movw    $0x1301,%ax
-    movw    %si,    %bp
-    movw    $8,     %cx
-    movw    $0x0002,%bx
-    movb    Row,    %dh
-    movb    $0,     %dl
-    incb    Row
-    int     $0x10
-    # ===
     cld
     movw    $Loader,%bx
     movw    $11,    %cx
 0:
-    testw   %cx,    %cx
-    jz      1f
     lodsb
-    testb   (%bx),  %al
+    cmpb    (%bx),  %al
     jnz     1f
     incw    %bx
     loop    0b
@@ -120,16 +108,17 @@ Found:
     movw    $Msg0,  %bp
     movw    Len0,   %cx
     movw    $0x0002,%bx
-    movb    Row,    %dh
+    movb    $0,     %dh
     movb    $0,     %dl
     int     $0x10
+    jmp     End
 
 NotFound:
     movw    $0x1301,%ax
     movw    $Msg1,  %bp
     movw    Len1,   %cx
     movw    $0x0002,%bx
-    movb    Row,    %dh
+    movb    $0,     %dh
     movb    $0,     %dl
     int     $0x10
 
