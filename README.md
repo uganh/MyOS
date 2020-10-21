@@ -1,0 +1,11 @@
+MyOS
+====
+
+Boot
+----
+
+BIOS interrupt vector table: `[0x0, 0x3ff]`  
+Stack: `[0x400, 0x7bff]`  
+MBR: `[0x7c00, 0x7dff]`  
+Loader: `[0x8000, 0x81ff]`
+

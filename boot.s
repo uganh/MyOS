@@ -1,7 +1,5 @@
     .code16
 
-FirstRootSector = 19
-
 BS_jmpBoot:
     jmp     Boot
     nop
@@ -70,28 +68,25 @@ Boot:
     # Entry index
     movw    $0,     %di
 
-SearchBegin:
+FindLoader:
     cmpw    %di,    BPB_RootEntCnt
-    jbe     SearchEnd
+    jbe     NotFound
     testw   $0xf,   %di
-    jnz     0f
+    jnz     CompareFilename
     # Load next sector
     movw    %di,    %ax
     shrw    $4,     %ax
-    addw    $FirstRootSector,   %ax
-    movw    $0x8000,%bx
+    addw    $19,    %ax
+    movw    BufPtr, %bx
     movb    $1,     %dl
-    call    ReadSectors
-0:
-    # Entry offset
-    movw    %di,    %si
-    andw    $0xf,   %si
-    salw    $5,     %si
-    addw    $0x8000,%si
-    # File property
-    testb   $0x30,  11(%si)
+    call    Read
+    # Entry pointer
+    movw    BufPtr, %si
+CompareFilename:
+    # Test file
+    testb   $0x20,  11(%si)
     jz      1f
-    pushw   %bp
+    # DEBUG
     movw    $0x1301,%ax
     movw    %si,    %bp
     movw    $8,     %cx
@@ -100,40 +95,64 @@ SearchBegin:
     movb    $0,     %dl
     incb    Row
     int     $0x10
-    popw    %bp
+    # ===
+    cld
+    movw    $Loader,%bx
+    movw    $11,    %cx
+0:
+    testw   %cx,    %cx
+    jz      1f
+    lodsb
+    testb   (%bx),  %al
+    jnz     1f
+    incw    %bx
+    loop    0b
 1:
+    andw    $0xffe0,%si
+    testw   %cx,    %cx
+    jz      Found
     incw    %di
-    jmp     SearchBegin
-SearchEnd:
+    addw    $0x20,  %si
+    jmp     FindLoader
 
-    # Display
+Found:
     movw    $0x1301,%ax
-    movw    $Msg,   %bp
-    movw    Len,    %cx
+    movw    $Msg0,  %bp
+    movw    Len0,   %cx
     movw    $0x0002,%bx
     movb    Row,    %dh
     movb    $0,     %dl
     int     $0x10
 
+NotFound:
+    movw    $0x1301,%ax
+    movw    $Msg1,  %bp
+    movw    Len1,   %cx
+    movw    $0x0002,%bx
+    movb    Row,    %dh
+    movb    $0,     %dl
+    int     $0x10
+
+End:
     # Reset floppy disk
     movb    $0,     %ah
     movb    BS_DrvNum,  %dl
     int     $0x13
 
-    # Loop
     jmp     .
 
-ReadSectors:
-    # Parameter
+Read:
+    # Parameters
     #   %ax: The LBA number
-    #   %dl: The number of sectors to read
+    #   %dl: The number of sectors to be read
     #   [%es:%bx]: The buffer address
     # Return
-    #   %ax: The number of sectors have been read
+    #   %ax: The total number of sectors successfully read
     pushw   %bp
     movw    %sp,    %bp
 
     divb    BPB_SecPerTrk
+
     # Head
     movb    %al,    %dh
     andb    $1,     %dh
@@ -147,29 +166,30 @@ ReadSectors:
     movb    %dl,    %al
     movb    BS_DrvNum,  %dl
 
-Retry:
+0:
     movb    $0x02,  %ah
     int     $0x13
-    jc      Retry
+    jc      0b
     
     popw    %bp
     ret
 
-    # Data
-Msg:
-    .ascii  "Done."
+BufPtr:
+    .word   0x7e00
 
-Len:
-    .word   . - Msg
+    # Read-only data
+Loader:
+    .ascii  "LOADER     "
 
-End:
-    .ascii  "\n"
+Msg0:
+    .ascii  "Found loader"
+Len0:
+    .word   . - Msg0
 
-Row:
-    .byte   0
-
-Index:
-    .word   0
+Msg1:
+    .ascii  "Loader not found"
+Len1:
+    .word   . - Msg1
 
     # Padding
     .org    510
