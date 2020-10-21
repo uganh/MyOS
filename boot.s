@@ -1,5 +1,9 @@
     .code16
 
+BufPtr = 0x7e00
+FATTab = 0x8000
+Loader = 0x1000
+
 BS_jmpBoot:
     jmp     Boot
     nop
@@ -65,6 +69,12 @@ Boot:
     movw    $0,     %bx
     int     $0x10
 
+    # Load FAT
+    movw    $1,     %ax
+    movw    $FATTab,%bx
+    movb    BPB_FATSz16,    %dl
+    call    Read
+
     # Entry index
     movw    $0,     %di
 
@@ -77,17 +87,17 @@ FindLoader:
     movw    %di,    %ax
     shrw    $4,     %ax
     addw    $19,    %ax
-    movw    BufPtr, %bx
+    movw    $BufPtr,%bx
     movb    $1,     %dl
     call    Read
     # Entry pointer
-    movw    BufPtr, %si
+    movw    $BufPtr,%si
 CompareFilename:
     # Test file
     testb   $0x20,  11(%si)
     jz      1f
     cld
-    movw    $Loader,%bx
+    movw    $Target,%bx
     movw    $11,    %cx
 0:
     lodsb
@@ -111,6 +121,33 @@ Found:
     movb    $0,     %dh
     movb    $0,     %dl
     int     $0x10
+
+    # %si: Entry pointer
+    # First cluster number
+    movw    26(%si),%di
+    movw    $Loader,%bx
+0:
+    movw    %di,    %ax
+    addw    $31,    %ax
+    movb    BPB_SecPerClus, %dl
+    # Next cluster
+    movw    %di,    %si
+    salw    $1,     %si
+    addw    %di,    %si
+    shrw    $1,     %si
+    addw    $FATTab,%si
+    movw    (%si),  %dx
+    movw    %dx,    %ax
+    addw    $0x0fff,%dx
+    shrw    $4,     %ax
+    testw   $1,     %di
+    cmovz   %dx,    %ax
+    cmpw    $0x0fff,%ax
+    je      1f
+    movw    %ax,    %di
+    addw    $1,     %bx
+    jmp     0b
+1:
     jmp     End
 
 NotFound:
@@ -163,11 +200,8 @@ Read:
     popw    %bp
     ret
 
-BufPtr:
-    .word   0x7e00
-
     # Read-only data
-Loader:
+Target:
     .ascii  "LOADER     "
 
 Msg0:
