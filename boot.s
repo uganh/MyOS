@@ -2,7 +2,7 @@
 
 BufPtr = 0x7e00
 FATTab = 0x8000
-Loader = 0x1000
+LdrSeg = 0x1000
 
 BS_jmpBoot:
     jmp     Boot
@@ -50,10 +50,9 @@ BS_FileSysType:
 Boot:
     movw    %cs,    %ax
     movw    %ax,    %ds
-    movw    %ax,    %ss
     movw    %ax,    %es
-
-    # Stack
+    movw    $0,     %ax
+    movw    %ax,    %ss
     movw    $0x7c00,%sp
 
     # Clear screan
@@ -118,17 +117,20 @@ Found:
     movw    $Msg0,  %bp
     movw    Len0,   %cx
     movw    $0x0002,%bx
-    movb    $0,     %dh
-    movb    $0,     %dl
+    movw    $0x0000,%dx
     int     $0x10
 
     # %si: Entry pointer
     # First cluster number
     movw    26(%si),%di
-    movw    $Loader,%bx
+
+    # Loader sigment
+    movw    $LdrSeg,%ax
+    movw    %ax,    %es
+    movw    $0,     %bx
 0:
     cmpw    $0x0fff,%ax
-    je      1f
+    je      End
     movw    %di,    %ax
     addw    $31,    %ax
     movb    BPB_SecPerClus, %dl
@@ -155,23 +157,13 @@ Found:
     movw    %ax,    %di
     addw    BPB_BytesPerSec,    %bx
     jmp     0b
-1:
-    movw    $0x1301,%ax
-    movw    $Msg2,  %bp
-    movw    Len2,   %cx
-    movw    $0x0002,%bx
-    movb    $2,     %dh
-    movb    $0,     %dl
-    int     $0x10
-    jmp     End
 
 NotFound:
     movw    $0x1301,%ax
     movw    $Msg1,  %bp
     movw    Len1,   %cx
     movw    $0x0002,%bx
-    movb    $0,     %dh
-    movb    $0,     %dl
+    movw    $0x0000,%dx
     int     $0x10
 
 End:
@@ -220,17 +212,13 @@ Target:
     .ascii  "LOADER     "
 
 Msg0:
-    .ascii  "Found loader\r\nLoading "
+    .ascii  "Loading "
 Len0:
     .word   . - Msg0
 Msg1:
-    .ascii  "Loader not found"
+    .ascii  "ERROR: Loader not found"
 Len1:
     .word   . - Msg1
-Msg2:
-    .ascii  "Loader loaded"
-Len2:
-    .word   . - Msg2
 
     # Padding
     .org    510
