@@ -127,9 +127,19 @@ Found:
     movw    26(%si),%di
     movw    $Loader,%bx
 0:
+    cmpw    $0x0fff,%ax
+    je      1f
     movw    %di,    %ax
     addw    $31,    %ax
     movb    BPB_SecPerClus, %dl
+    call    Read
+    # Process bar
+    movw    %bx,    %cx
+    movb    $0x0e,  %ah
+    movb    $0x2e,  %al
+    movw    $0x0f,  %bx
+    int     $0x10
+    movw    %cx,    %bx
     # Next cluster
     movw    %di,    %si
     salw    $1,     %si
@@ -138,16 +148,21 @@ Found:
     addw    $FATTab,%si
     movw    (%si),  %dx
     movw    %dx,    %ax
-    addw    $0x0fff,%dx
+    andw    $0x0fff,%dx
     shrw    $4,     %ax
     testw   $1,     %di
     cmovz   %dx,    %ax
-    cmpw    $0x0fff,%ax
-    je      1f
     movw    %ax,    %di
-    addw    $1,     %bx
+    addw    BPB_BytesPerSec,    %bx
     jmp     0b
 1:
+    movw    $0x1301,%ax
+    movw    $Msg2,  %bp
+    movw    Len2,   %cx
+    movw    $0x0002,%bx
+    movb    $2,     %dh
+    movb    $0,     %dl
+    int     $0x10
     jmp     End
 
 NotFound:
@@ -205,14 +220,17 @@ Target:
     .ascii  "LOADER     "
 
 Msg0:
-    .ascii  "Found loader"
+    .ascii  "Found loader\r\nLoading "
 Len0:
     .word   . - Msg0
-
 Msg1:
     .ascii  "Loader not found"
 Len1:
     .word   . - Msg1
+Msg2:
+    .ascii  "Loader loaded"
+Len2:
+    .word   . - Msg2
 
     # Padding
     .org    510
