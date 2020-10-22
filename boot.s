@@ -9,7 +9,7 @@ BS_jmpBoot:
     nop
 
 BS_OEMName:
-    .ascii  "MINEBoot"
+    .ascii  "MyOSBoot"
 BPB_BytesPerSec:
     .word   512
 BPB_SecPerClus:
@@ -165,14 +165,11 @@ NotFound:
     movw    $0x0002,%bx
     movw    $0x0000,%dx
     int     $0x10
+    jmp     .
 
 End:
-    # Reset floppy disk
-    movb    $0,     %ah
-    movb    BS_DrvNum,  %dl
-    int     $0x13
-
-    jmp     .
+    # Jump to loader
+    ljmp    $LdrSeg,$0
 
 Read:
     # Parameters

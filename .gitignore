@@ -1,6 +1,7 @@
 # Binary files
 *.o
 boot
+loader
 
 # Image files
 *.img

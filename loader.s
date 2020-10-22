@@ -2,7 +2,7 @@
 
 Loader:
     movw    %cs,    %ax
-    movw    %ax,    %dx
+    movw    %ax,    %ds
     movw    %ax,    %es
     movw    $0,     %ax
     movw    %ax,    %ss
@@ -13,7 +13,7 @@ Loader:
     movw    $Msg0,  %bp
     movw    Len0,   %cx
     movw    $0x0002,%bx
-    movw    $0x0000,%dx
+    movw    $0x0100,%dx
     int     $0x10
 
     jmp     .
