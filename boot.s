@@ -164,7 +164,7 @@ NotFound:
 End:
     # Enter protected mode
     cli
-    lgdt    $GDT_48
+    lgdt    GDT_48
     movw    $1,     %ax
     lmsw    %ax
 

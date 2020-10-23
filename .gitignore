@@ -1,7 +1,7 @@
 # Binary files
 *.o
 boot
-loader
+kernel
 
 # Image files
 *.img

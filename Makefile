@@ -10,9 +10,9 @@ boot: boot.s
 	as -o boot.o boot.s
 	ld --oformat binary -Ttext=0x7c00 -o boot boot.o
 
-kernel: kernel.s
-	as -o kernel.o kernel.s
-	ld --oformat binary -Ttext=0x0 -o kernel kernel.o
+kernel: kernel32/head.s
+	as --32 -o head.o kernel32/head.s
+	ld -m elf_i386 --oformat binary -Ttext=0 -o kernel head.o
 
 clean:
 	rm -rf boot kernel *.o

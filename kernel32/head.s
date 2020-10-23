@@ -8,10 +8,11 @@ Kernel:
     movw    %ax,    %es
 
     # Set stack
-    movw    $512,   %esp
+    movl    $512,   %esp
 
+    movl    MsgLen, %eax
+    pushl   %eax
     pushl   $MsgStr
-    pushl   MsgLen
     call    Print
 
     jmp     .
@@ -25,12 +26,13 @@ Print:
     pushl   %esi
     pushl   %edi
 
-    movl    -0x4(%ebp), %esi
-    movl    -0x8(%ebp), %ecx
-    xorl    %edi,   %edi    
+    movl    0x8(%ebp),  %esi
+    movl    0xc(%ebp),  %ecx
+    xorl    %edi,   %edi
+    movb    $0x2,   %al
+    cld
 
 0:
-    cld
     movsb
     stosb
     loop    0b

@@ -3,6 +3,6 @@ boot: floppy
 floppya: type=1_44, 1_44="boot.img", status=inserted, write_protected=0
 
 cpu: count=1
-cpuid: x86_64=1, mmx=1, sep=1, simd=sse4_2, apic=xapic, aes=1, movbe=1, xsave=1, family=6, model=0x1a, stepping=5
+#cpuid: x86_64=1, mmx=1, sep=1, simd=sse4_2, apic=xapic, aes=1, movbe=1, xsave=1, family=6, model=0x1a, stepping=5
 
 megs: 32
