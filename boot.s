@@ -1,9 +1,5 @@
     .code16
 
-BufPtr = 0x7e00
-FATTab = 0x8000
-LdrSeg = 0x1000
-
 BS_jmpBoot:
     jmp     Boot
     nop
@@ -70,7 +66,7 @@ Boot:
 
     # Load FAT
     movw    $1,     %ax
-    movw    $FATTab,%bx
+    movw    FATTab, %bx
     movb    BPB_FATSz16,    %dl
     call    Read
 
@@ -86,17 +82,17 @@ FindLoader:
     movw    %di,    %ax
     shrw    $4,     %ax
     addw    $19,    %ax
-    movw    $BufPtr,%bx
+    movw    $0x7e00,%bx
     movb    $1,     %dl
     call    Read
     # Entry pointer
-    movw    $BufPtr,%si
+    movw    $0x7e00,%si
 CompareFilename:
     # Test file
     testb   $0x20,  11(%si)
     jz      1f
     cld
-    movw    $Target,%bx
+    movw    $Kernel,%bx
     movw    $11,    %cx
 0:
     lodsb
@@ -124,10 +120,8 @@ Found:
     # First cluster number
     movw    26(%si),%di
 
-    # Loader sigment
-    movw    $LdrSeg,%ax
-    movw    %ax,    %es
-    movw    $0,     %bx
+    # Kernel space
+    movw    $0x7e00,%bx
 0:
     cmpw    $0x0fff,%ax
     je      End
@@ -147,7 +141,7 @@ Found:
     salw    $1,     %si
     addw    %di,    %si
     shrw    $1,     %si
-    addw    $FATTab,%si
+    addw    FATTab, %si
     movw    (%si),  %dx
     movw    %dx,    %ax
     andw    $0x0fff,%dx
@@ -168,8 +162,14 @@ NotFound:
     jmp     .
 
 End:
-    # Jump to loader
-    ljmp    $LdrSeg,$0
+    # Enter protected mode
+    cli
+    lgdt    $GDT_48
+    movw    $1,     %ax
+    lmsw    %ax
+
+    # Jump to kernel
+    ljmp    $0x8,   $0
 
 Read:
     # Parameters
@@ -205,15 +205,29 @@ Read:
     ret
 
     # Read-only data
-Target:
-    .ascii  "LOADER     "
+GDT:
+    .quad   0
+    .quad   0x00409a007e0001ff
+    .quad   0x004092007e0001ff
+    .quad   0x00409200900001ff
+    .quad   0x0040920b80000f9f
+
+GDT_48:
+    .word   (. - GDT) - 1
+    .int    GDT
+
+Kernel:
+    .ascii  "KERNEL     "
+
+FATTab:
+    .word   0x4000
 
 Msg0:
     .ascii  "Loading "
 Len0:
     .word   . - Msg0
 Msg1:
-    .ascii  "ERROR: Loader not found"
+    .ascii  "ERROR: Kernel not found"
 Len1:
     .word   . - Msg1
 
