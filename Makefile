@@ -10,9 +10,15 @@ boot: boot.s
 	as -o boot.o boot.s
 	ld --oformat binary -Ttext=0x7c00 -o boot boot.o
 
-kernel: kernel32/head.s
+kernel: kernel32/head.s kernel32/interrupt.s driver
 	as --32 -o head.o kernel32/head.s
-	ld -m elf_i386 --oformat binary -Ttext=0 -o kernel head.o
+	as --32 -o interrupt.o kernel32/interrupt.s
+	ld -m elf_i386 --oformat binary -Ttext=0 -o kernel head.o interrupt.o 8253.o 8259A.o display.o
+
+driver: kernel32/driver/8253.s kernel32/driver/8259A.s kernel32/driver/display.s
+	as --32 -o 8253.o kernel32/driver/8253.s
+	as --32 -o 8259A.o kernel32/driver/8259A.s
+	as --32 -o display.o kernel32/driver/display.s
 
 clean:
 	rm -rf boot kernel *.o

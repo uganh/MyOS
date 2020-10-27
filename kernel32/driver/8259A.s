@@ -1,4 +1,4 @@
-    .global Init_8259A, Mask_8259A
+    .global Init_8259A, Mask_8259A, Enable_8259A
 
 Init_8259A:
     # Initialize the clock interrupt controller
@@ -36,18 +36,24 @@ Mask_8259A:
     # Mask interrupt
     #
     # Parameters
-    #   %ax: Mask code
+    #   8(%ebp): Mask code
+
+    pushl   %ebp
+    movl    %esp,   %ebp
+    pushl   %eax
+
+    movl    8(%ebp),%eax
 
     outb    %al,    $0x21
     movb    %ah,    %al
     outb    %al,    $0xa1
 
+    popl    %eax
+    popl    %ebp
     ret
 
 Enable_8259A:
-    # Enable
-    #
-    # Parameters
+    # Enable 8259A
     pushl   %eax
     
     movb    $0x20,  %al

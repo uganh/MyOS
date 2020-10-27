@@ -2,6 +2,9 @@
 
 Init_IDTR:
     # Initialize IDTR
+    pushl   %eax
+    pushl   %ecx
+    pushl   %edx
     pushl   %esi
 
     # Timer interrupt
@@ -17,35 +20,38 @@ Init_IDTR:
     lidt    IDT_48
 
     popl    %esi
+    popl    %edx
+    popl    %ecx
+    popl    %eax
     ret
 
 TimerInterrupt:
     call    Enable_8259A
     
     subl    $10,    Milsec
-    jne     1f
+    jne     2f
     
     # Reset
     movl    $1000,  Milsec
     
     xorl    $1,     Switch
     je      0f
-
-    pushl   Len1
-    pushl   $Msg1
-    call    Display
+    pushl    Len1
+    pushl    $Msg1
     jmp     1f
 0:
-    pushl   Len0
-    pushl   $Msg0
-    call    Display
-
+    pushl    Len0
+    pushl    $Msg0
 1:
+    call    Display
+    addl    $8,     %esp
+
+2:
     iret
 
 IDT_48:
     .word   (IDTEnd - IDT) - 1
-    .int    0x7e00 + IDT
+    .long   0x7e00 + IDT
 
     # Interrupt descriptor table
 IDT:
@@ -54,16 +60,16 @@ IDTEnd:
 
     # Global data
 Milsec:
-    .word   1000
+    .long   1000
 Switch:
-    .word   0
+    .long   0
 
     # Read-only data
 Msg0:
     .ascii  "Foo"
 Len0:
-    .word   . - Msg0
+    .long   . - Msg0
 Msg1:
     .ascii  "Bar"
 Len1:
-    .word   . - Msg0
+    .long   . - Msg1

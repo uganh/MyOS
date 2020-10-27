@@ -13,12 +13,18 @@ Kernel:
     pushl   MsgLen
     pushl   $MsgStr
     call    Display
+    addl    $8,     %esp
 
     call    Init_8259A
 
     # Interrupt every 10 ms
-    movw    $11931, %cx
+    pushl   $11931
     call    Init_8253
+    addl    $4,     %esp
+
+    pushl   $0xfffe
+    call    Mask_8259A
+    addl    $4,     %esp
 
     call    Init_IDTR
 

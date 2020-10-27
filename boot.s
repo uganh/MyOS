@@ -224,14 +224,14 @@ Len1:
 
 GDT_48:
     .word   (GDTEnd - GDT) - 1
-    .int    GDT
+    .long   GDT
 
     # Global descriptor table
 GDT:
     .quad   0
-    .quad   0x00409a007e0001ff
-    .quad   0x004092007e0001ff
-    .quad   0x00409200900001ff
+    .quad   0x00409a007e0009ff
+    .quad   0x004092007e0009ff
+    .quad   0x00409200600001ff
     .quad   0x0040920b80000f9f
 GDTEnd:
 

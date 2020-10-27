@@ -6,16 +6,20 @@ Init_8253:
     # Registers: 0x43, 0x40
     #
     # Parameters
-    #   %cx: Latch
+    #   0x8(%ebp): Latch
 
+    pushl   %ebp
+    movl    %esp,   %ebp
     pushl   %eax
 
     movb    $0x36,  %al
     outb    %al,    $0x43
 
-    outb    %cl,    $0x40
-    movb    %ch,    %cl
-    outb    %cl,    $0x40
+    movl    8(%ebp),%eax
+    outb    %al,    $0x40
+    movb    %ah,    %al
+    outb    %al,    $0x40
 
     popl    %eax
+    popl    %ebp
     ret

@@ -11,6 +11,8 @@ Display:
     movl    %esp,   %ebp
     pushl   %esi
     pushl   %edi
+    pushl   %ecx
+    pushl   %eax
 
     movl    0x8(%ebp),  %esi
     movl    0xc(%ebp),  %ecx
@@ -23,6 +25,8 @@ Display:
     stosb
     loop    0b
 
+    popl    %eax
+    popl    %ecx
     popl    %edi
     popl    %esi
     popl    %ebp
