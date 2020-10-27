@@ -1,9 +1,11 @@
-    .global Init_8253
+    .global Init_8253, Interrupt_0x20
+
+    # Frequency: 1193180Hz
+    # Registers: 0x43, 0x40
+    # Interrupt: 0x20
 
 Init_8253:
     # Initialize programmable timer (0)
-    # Frequency: 1193180Hz
-    # Registers: 0x43, 0x40
     #
     # Parameters
     #   0x8(%ebp): Latch
@@ -23,3 +25,44 @@ Init_8253:
     popl    %eax
     popl    %ebp
     ret
+
+Interrupt_0x20:
+    # Interrupt handler
+    # Display `Foo` and `Bar` alternately
+
+    call    Enable_8259A
+    
+    subl    $10,    Milsec
+    jne     2f
+    
+    # Reset
+    movl    $1000,  Milsec
+    
+    xorl    $1,     Status
+    je      0f
+    pushl   MsgEnd1 - Msg1
+    pushl   $Msg1
+    jmp     1f
+0:
+    pushl   MsgEnd0 - Msg0
+    pushl   $Msg0
+1:
+    call    Display
+    addl    $8,     %esp
+
+2:
+    iret
+
+    # Global data
+Milsec:
+    .long   1000
+Status:
+    .long   0
+
+    # Read-only data
+Msg0:
+    .ascii  "Foo"
+MsgEnd0:
+Msg1:
+    .ascii  "Bar"
+MsgEnd1:

@@ -10,8 +10,8 @@ Kernel:
     # Set stack
     movl    $512,   %esp
 
-    pushl   MsgLen
-    pushl   $MsgStr
+    pushl   MsgEnd - Msg
+    pushl   $Msg
     call    Display
     addl    $8,     %esp
 
@@ -22,7 +22,9 @@ Kernel:
     call    Init_8253
     addl    $4,     %esp
 
-    pushl   $0xfffe
+    call    Init_keyboard
+
+    pushl   $0xfffc
     call    Mask_8259A
     addl    $4,     %esp
 
@@ -33,7 +35,6 @@ Kernel:
     jmp     .
 
     # Read-only data
-MsgStr:
+Msg:
     .ascii  "Kernel start"
-MsgLen:
-    .long   . - MsgStr
+MsgEnd:
