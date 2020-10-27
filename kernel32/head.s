@@ -10,7 +10,7 @@ Kernel:
     # Set stack
     movl    $512,   %esp
 
-    pushl   MsgEnd - Msg
+    pushl   MsgLen
     pushl   $Msg
     call    Display
     addl    $8,     %esp
@@ -37,4 +37,5 @@ Kernel:
     # Read-only data
 Msg:
     .ascii  "Kernel start"
-MsgEnd:
+MsgLen:
+    .long   . - Msg

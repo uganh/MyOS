@@ -229,8 +229,8 @@ GDT_48:
     # Global descriptor table
 GDT:
     .quad   0
-    .quad   0x00409a007e0009ff
-    .quad   0x004092007e0009ff
+    .quad   0x00409a007e000dff
+    .quad   0x004092007e000dff
     .quad   0x00409200600001ff
     .quad   0x0040920b80000f9f
 GDTEnd:

@@ -7,12 +7,22 @@ Init_IDTR:
     pushl   %edx
     pushl   %esi
 
-    # Timer interrupt
+    # Interrupt 0x20
     movl    $Interrupt_0x20,%edx
     movw    $0x8e00,%dx
     movl    $0x00080000,    %eax
     movw    $Interrupt_0x20,%ax
     movl    $0x20,  %ecx
+    leal    IDT(, %ecx, 8), %esi
+    movl    %eax,   (%esi)
+    movl    %edx,   4(%esi)
+
+    # Interrupt 0x21
+    movl    $Interrupt_0x21,%edx
+    movw    $0x8e00,%dx
+    movl    $0x00080000,    %eax
+    movw    $Interrupt_0x21,%ax
+    movl    $0x21,  %ecx
     leal    IDT(, %ecx, 8), %esi
     movl    %eax,   (%esi)
     movl    %edx,   4(%esi)

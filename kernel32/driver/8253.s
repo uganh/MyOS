@@ -40,11 +40,11 @@ Interrupt_0x20:
     
     xorl    $1,     Status
     je      0f
-    pushl   MsgEnd1 - Msg1
+    pushl   MsgLen1
     pushl   $Msg1
     jmp     1f
 0:
-    pushl   MsgEnd0 - Msg0
+    pushl   MsgLen0
     pushl   $Msg0
 1:
     call    Display
@@ -62,7 +62,9 @@ Status:
     # Read-only data
 Msg0:
     .ascii  "Foo"
-MsgEnd0:
+MsgLen0:
+    .long   . - Msg0
 Msg1:
     .ascii  "Bar"
-MsgEnd1:
+MsgLen1:
+    .long   . - Msg1

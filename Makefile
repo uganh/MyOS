@@ -13,12 +13,13 @@ boot: boot.s
 kernel: kernel32/head.s kernel32/interrupt.s driver
 	as --32 -o head.o kernel32/head.s
 	as --32 -o interrupt.o kernel32/interrupt.s
-	ld -m elf_i386 --oformat binary -Ttext=0 -o kernel head.o interrupt.o 8253.o 8259A.o display.o
+	ld -m elf_i386 --oformat binary -Ttext=0 -o kernel head.o interrupt.o 8253.o 8259A.o display.o keyboard.o
 
-driver: kernel32/driver/8253.s kernel32/driver/8259A.s kernel32/driver/display.s
+driver: kernel32/driver/8253.s kernel32/driver/8259A.s kernel32/driver/display.s kernel32/driver/keyboard.s
 	as --32 -o 8253.o kernel32/driver/8253.s
 	as --32 -o 8259A.o kernel32/driver/8259A.s
 	as --32 -o display.o kernel32/driver/display.s
+	as --32 -o keyboard.o kernel32/driver/keyboard.s
 
 clean:
 	rm -rf boot kernel *.o

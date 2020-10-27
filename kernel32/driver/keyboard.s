@@ -1,9 +1,10 @@
-    .global Init_keybord, Interrupt_0x21
+    .global Init_keyboard, Interrupt_0x21
 
-Init_keybord:
-    # Initialize keyboard
     # Registers: 0x60, 0x61
-    # Interrupt: 0x20
+    # Interrupt: 0x21
+
+Init_keyboard:
+    # Initialize keyboard
 
     pushl   %eax
 
@@ -38,11 +39,11 @@ Interrupt_0x21:
     call    Enable_keyboard
 
     xorl    $1,     Status
-    jne     0f
+    je      0f
     
     # Release keyboard
-    pushl   MsgEnd0 - Msg0
-    pushl   $Msg0
+    pushl   MsgLen
+    pushl   $Msg
     call    Display
     addl    $8,     %esp
 
@@ -56,4 +57,5 @@ Status:
     # Read-only data
 Msg:
     .ascii  "233"
-MsgEnd:
+MsgLen:
+    .long   . - Msg
