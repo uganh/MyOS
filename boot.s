@@ -172,6 +172,8 @@ End:
     ljmp    $0x8,   $0
 
 Read:
+    # Read sectors from floppy disk
+    #
     # Parameters
     #   %ax: The LBA number
     #   %dl: The number of sectors to be read
@@ -205,17 +207,6 @@ Read:
     ret
 
     # Read-only data
-GDT:
-    .quad   0
-    .quad   0x00409a007e0001ff
-    .quad   0x004092007e0001ff
-    .quad   0x00409200900001ff
-    .quad   0x0040920b80000f9f
-
-GDT_48:
-    .word   (. - GDT) - 1
-    .int    GDT
-
 Kernel:
     .ascii  "KERNEL     "
 
@@ -230,6 +221,19 @@ Msg1:
     .ascii  "ERROR: Kernel not found"
 Len1:
     .word   . - Msg1
+
+GDT_48:
+    .word   (GDTEnd - GDT) - 1
+    .int    GDT
+
+    # Global descriptor table
+GDT:
+    .quad   0
+    .quad   0x00409a007e0001ff
+    .quad   0x004092007e0001ff
+    .quad   0x00409200900001ff
+    .quad   0x0040920b80000f9f
+GDTEnd:
 
     # Padding
     .org    510
