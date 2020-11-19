@@ -162,8 +162,15 @@ NotFound:
     jmp     .
 
 End:
+    cli
+
+    # Enter protected mode
+    lgdt    GDT_48
+    movw    $1,     %ax
+    lmsw    %ax
+
     # Jump to kernel
-    jmp     0x07e0:0
+    ljmp    $0x8,   $0
 
 Read:
     # Read sectors from floppy disk
@@ -200,10 +207,11 @@ Read:
     popw    %bp
     ret
 
-FATTab = 0x4000
-
 Kernel:
     .ascii  "KERNEL     "
+
+FATTab:
+    .word   0x4000
 
 Msg0:
     .ascii  "Loading "
@@ -213,6 +221,20 @@ Msg1:
     .ascii  "ERROR: Kernel not found"
 Len1:
     .word   . - Msg1
+
+    # Global descriptor table
+GDT:
+    .quad   0
+    .quad   0x00409a007e000dff
+    .quad   0x004092007e000dff
+    .quad   0x00409200600001ff
+    .quad   0x0040920b80000f9f
+GDTEnd:
+
+
+GDT_48:
+    .word   (GDTEnd - GDT) - 1
+    .long   GDT
 
     # Padding
     .org    510

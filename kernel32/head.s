@@ -1,11 +1,3 @@
-    # Enter protected mode
-    cli
-    lgdt    GDT_48
-    movw    $1,     %ax
-    lmsw    %ax
-
-    ljmp    $0x8:Kernel
-
 Kernel:
     # Set segments
     movw    $0x10,  %ax
