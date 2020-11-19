@@ -1,5 +1,13 @@
+    # Enter protected mode
+    cli
+    lgdt    GDT_48
+    movw    $1,     %ax
+    lmsw    %ax
+
+    ljmp    $0x8:Kernel
+
 Kernel:
-    # Set segment
+    # Set segments
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    $0x18,  %ax
@@ -39,3 +47,16 @@ Msg:
     .ascii  "Kernel start"
 MsgLen:
     .long   . - Msg
+
+GDT_48:
+    .word   (GDTEnd - GDT) - 1
+    .long   GDT
+
+    # Global descriptor table
+GDT:
+    .quad   0
+    .quad   0x00409a007e000dff
+    .quad   0x004092007e000dff
+    .quad   0x00409200600001ff
+    .quad   0x0040920b80000f9f
+GDTEnd:

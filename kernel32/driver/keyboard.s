@@ -1,4 +1,4 @@
-    .global Init_keyboard, Interrupt_0x21
+    .global Init_keyboard, Enable_keyboard
 
     # Registers: 0x60, 0x61
     # Interrupt: 0x21
@@ -31,31 +31,3 @@ Enable_keyboard:
 
     popl    %eax
     ret
-
-Interrupt_0x21:
-    # Interrupt handler
-
-    call    Enable_8259A
-    call    Enable_keyboard
-
-    xorl    $1,     Status
-    je      0f
-    
-    # Release keyboard
-    pushl   MsgLen
-    pushl   $Msg
-    call    Display
-    addl    $8,     %esp
-
-0:
-    iret
-
-    # Global data
-Status:
-    .long   0
-
-    # Read-only data
-Msg:
-    .ascii  "233"
-MsgLen:
-    .long   . - Msg
