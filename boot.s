@@ -70,89 +70,24 @@ Boot:
     movb    BPB_FATSz16,    %dl
     call    Read
 
-    # Entry index
+    # Load task
     movw    $0,     %di
+    movw    $Task,  %dx
+    movw    $0x9c00,%bx
+    call    Load
+    testw   %ax,    %ax
+    jnz     Failure
 
-FindLoader:
-    cmpw    %di,    BPB_RootEntCnt
-    jbe     NotFound
-    testw   $0xf,   %di
-    jnz     CompareFilename
-    # Load next sector
-    movw    %di,    %ax
-    shrw    $4,     %ax
-    addw    $19,    %ax
+    # Load kernel
+    movw    $1,     %di
+    movw    $Kernel,%dx
     movw    $0x7e00,%bx
-    movb    $1,     %dl
-    call    Read
-    # Entry pointer
-    movw    $0x7e00,%si
-CompareFilename:
-    # Test file
-    testb   $0x20,  11(%si)
-    jz      1f
-    cld
-    movw    $Kernel,%bx
-    movw    $11,    %cx
-0:
-    lodsb
-    cmpb    (%bx),  %al
-    jnz     1f
-    incw    %bx
-    loop    0b
-1:
-    andw    $0xffe0,%si
-    testw   %cx,    %cx
-    jz      Found
-    incw    %di
-    addw    $0x20,  %si
-    jmp     FindLoader
+    call    Load
+    testw   %ax,    %ax
+    jz      Success
 
-Found:
-    movw    $0x1301,%ax
-    movw    $Msg0,  %bp
-    movw    Len0,   %cx
-    movw    $0x0002,%bx
-    movw    $0x0000,%dx
-    int     $0x10
-
-    # %si: Entry pointer
-    # First cluster number
-    movw    26(%si),%di
-
-    # Kernel space
-    movw    $0x7e00,%bx
-0:
-    cmpw    $0x0fff,%ax
-    je      End
-    movw    %di,    %ax
-    addw    $31,    %ax
-    movb    BPB_SecPerClus, %dl
-    call    Read
-    # Process bar
-    movw    %bx,    %cx
-    movb    $0x0e,  %ah
-    movb    $0x2e,  %al
-    movw    $0x0f,  %bx
-    int     $0x10
-    movw    %cx,    %bx
-    # Next cluster
-    movw    %di,    %si
-    salw    $1,     %si
-    addw    %di,    %si
-    shrw    $1,     %si
-    addw    FATTab, %si
-    movw    (%si),  %dx
-    movw    %dx,    %ax
-    andw    $0x0fff,%dx
-    shrw    $4,     %ax
-    testw   $1,     %di
-    cmovz   %dx,    %ax
-    movw    %ax,    %di
-    addw    BPB_BytesPerSec,    %bx
-    jmp     0b
-
-NotFound:
+Failure:
+    # Load failed
     movw    $0x1301,%ax
     movw    $Msg1,  %bp
     movw    Len1,   %cx
@@ -161,16 +96,9 @@ NotFound:
     int     $0x10
     jmp     .
 
-End:
-    cli
-
-    # Enter protected mode
-    lgdt    GDT_48
-    movw    $1,     %ax
-    lmsw    %ax
-
+Success:
     # Jump to kernel
-    ljmp    $0x8,   $0
+    ljmp    $0x07e0,$0
 
 Read:
     # Read sectors from floppy disk
@@ -181,8 +109,6 @@ Read:
     #   [%es:%bx]: The buffer address
     # Return
     #   %ax: The total number of sectors successfully read
-    pushw   %bp
-    movw    %sp,    %bp
 
     divb    BPB_SecPerTrk
 
@@ -204,9 +130,141 @@ Read:
     int     $0x13
     jc      0b
     
+    ret
+
+Load:
+    # Load file (FAT12)
+    #
+    # Parameters
+    #   %di: Verbose
+    #   %dx: Filename
+    #   [%es:%bx]: The buffer address
+    # Return
+    #   %ax: Zero if load successfully, and -1 otherwise
+
+    pushw   %bp
+    movw    %sp,    %bp
+    pushw   %bx
+    pushw   %si
+    pushw   %di
+
+    # Save filename
+    subw    $2,     %sp
+    movw    %dx,    -8(%bp)
+
+    # Entry index
+    movw    $0,     %di
+
+FindFile:
+    cmpw    %di,    BPB_RootEntCnt
+    jbe     NotFound
+    testw   $0xf,   %di
+    jnz     CompareFilename
+    # Load next sector
+    movw    %di,    %ax
+    shrw    $4,     %ax
+    addw    $19,    %ax
+    movw    $0x6000,%bx
+    movb    $1,     %dl
+    call    Read
+    # Entry pointer
+    movw    $0x6000,%si
+CompareFilename:
+    movw    $11,    %cx
+    # Test flag (0x20 means common file)
+    cmpb    $0x20,  11(%si)
+    jnz      1f
+    cld
+    movw    -8(%bp),%bx
+0:
+    lodsb
+    cmpb    (%bx),  %al
+    jnz     1f
+    incw    %bx
+    loop    0b
+1:
+    andw    $0xffe0,%si
+    testw   %cx,    %cx
+    jz      Found
+    incw    %di
+    addw    $0x20,  %si
+    jmp     FindFile
+
+Found:
+    # Whether output prompt
+    movw    -6(%bp),%ax
+    testw   %ax,    %ax
+    jz      2f
+
+    # Verbose
+    movw    %bp,    %di
+    movw    $0x1301,%ax
+    movw    $Msg0,  %bp
+    movw    Len0,   %cx
+    movw    $0x0002,%bx
+    movw    $0x0000,%dx
+    int     $0x10
+    movw    %di,    %bp
+
+2:
+    # %si: Entry pointer
+    # First cluster number
+    movw    26(%si),%di
+
+    # Buffer
+    movw    -2(%bp),%bx
+3:
+    cmpw    $0x0fff,%ax
+    je      5f
+    movw    %di,    %ax
+    addw    $31,    %ax
+    movb    BPB_SecPerClus, %dl
+    call    Read
+    # Whether output prompt
+    movw    -6(%bp),%ax
+    testw   %ax,    %ax
+    jz      4f
+    # Process bar
+    movw    %bx,    %cx
+    movb    $0x0e,  %ah
+    movb    $0x2e,  %al
+    movw    $0x0f,  %bx
+    int     $0x10
+    movw    %cx,    %bx
+4:
+    # Next cluster
+    movw    %di,    %si
+    salw    $1,     %si
+    addw    %di,    %si
+    shrw    $1,     %si
+    addw    FATTab, %si
+    movw    (%si),  %dx
+    movw    %dx,    %ax
+    andw    $0x0fff,%dx
+    shrw    $4,     %ax
+    testw   $1,     %di
+    cmovz   %dx,    %ax
+    movw    %ax,    %di
+    addw    BPB_BytesPerSec,    %bx
+    jmp     3b
+5:
+    movw    $0,     %ax
+    jmp     LoadExit
+
+NotFound:
+    movw    $-1,    %ax
+
+LoadExit:
+    addw    $2,     %sp
+    popw    %di
+    popw    %si
+    popw    %bx
     popw    %bp
     ret
 
+    # Read-only data
+Task:
+    .ascii  "TASK       "
 Kernel:
     .ascii  "KERNEL     "
 
@@ -218,23 +276,9 @@ Msg0:
 Len0:
     .word   . - Msg0
 Msg1:
-    .ascii  "ERROR: Kernel not found"
+    .ascii  "ERROR: Kernel not found!\r\n"
 Len1:
     .word   . - Msg1
-
-    # Global descriptor table
-GDT:
-    .quad   0
-    .quad   0x00409a007e000dff
-    .quad   0x004092007e000dff
-    .quad   0x00409200600001ff
-    .quad   0x0040920b80000f9f
-GDTEnd:
-
-
-GDT_48:
-    .word   (GDTEnd - GDT) - 1
-    .long   GDT
 
     # Padding
     .org    510

@@ -1,4 +1,14 @@
     .global Init_IDTR
+    .global Delay_count
+
+    # Interrupt descriptor table
+IDT:
+    .fill   256, 8, 0
+IDTEnd:
+
+IDT_48:
+    .word   (IDTEnd - IDT) - 1
+    .long   0x7e00 + IDT
 
 Init_IDTR:
     # Initialize IDTR
@@ -13,7 +23,7 @@ Init_IDTR:
     movl    $0x00080000,    %eax
     movw    $Timer_interrupt,   %ax
     movl    $0x20,  %ecx
-    leal    IDT(, %ecx, 8), %esi
+    leal    IDT(,%ecx,8),   %esi
     movl    %eax,   (%esi)
     movl    %edx,   4(%esi)
 
@@ -23,7 +33,17 @@ Init_IDTR:
     movl    $0x00080000,    %eax
     movw    $Keyboard_interrupt,%ax
     movl    $0x21,  %ecx
-    leal    IDT(, %ecx, 8), %esi
+    leal    IDT(,%ecx,8),   %esi
+    movl    %eax,   (%esi)
+    movl    %edx,   4(%esi)
+
+    # Interrupt 0x80
+    movl    $Syscall_interrupt, %edx
+    movw    $0xef00,%dx
+    movl    $0x00080000,    %eax
+    movw    $Syscall_interrupt, %ax
+    movl    $0x80,  %ecx
+    leal    IDT(,%ecx,8),   %esi
     movl    %eax,   (%esi)
     movl    %edx,   4(%esi)
 
@@ -35,72 +55,74 @@ Init_IDTR:
     popl    %eax
     ret
 
-IDT_48:
-    .word   (IDTEnd - IDT) - 1
-    .long   0x7e00 + IDT
-
-    # Interrupt descriptor table
-IDT:
-    .fill   256, 8, 0
-IDTEnd:
-
 Timer_interrupt:
     # Timer interrupt handler
-    # Display `Foo` and `Bar` alternately
+
+    pushw   %ds
+    pushw   %es
+
+    # Set segments
+    pushl   %eax
+    movw    $0x10,  %ax
+    movw    %ax,    %ds
+    movw    $0x18,  %ax
+    movw    %ax,    %es
+    popl    %eax
 
     call    Enable_8259A
-    
-    subl    $10,    Milsec
-    jne     2f
 
-    # Reset
-    movl    $1000,  Milsec
-    
-    xorl    $1,     Status
-    je      0f
-    pushl   MsgLen1
-    pushl   $Msg1
-    jmp     1f
-0:
-    pushl   MsgLen0
-    pushl   $Msg0
+    decl    Delay_count
+
+    subl    $1,     Clock_count
+    jne     1f
+
+    movl    $100,   Clock_count
+    # Switch task
+    # Todo
+
 1:
-    call    Display
-    addl    $8,     %esp
-
-2:
+    popw    %es
+    popw    %ds
     iret
 
-Milsec:
-    .long   1000
-Status:
-    .long   0
+Clock_count:
+    .long   100
 
-Msg0:
-    .ascii  "Foo"
-MsgLen0:
-    .long   . - Msg0
-Msg1:
-    .ascii  "Bar"
-MsgLen1:
-    .long   . - Msg1
+Delay_count:
+    .long   0
 
 Keyboard_interrupt:
     # Keyboard interrupt handler
 
     call    Enable_8259A
     call    Enable_keyboard
-    
-    # Release key
-    pushl   MsgLen
-    pushl   $Msg
-    call    Display
-    addl    $8,     %esp
 
-0:
+    movl    $Msg,   %ebx
+    movl    MsgLen, %ecx
+    call    Sys_print
+
     iret
 
 Msg:
     .ascii  "233"
 MsgLen:
     .long   . - Msg
+
+Syscall_interrupt:
+    # System call interrupt handler
+
+    pushw   %ds
+    pushw   %es
+
+    pushl   %eax
+    movw    $0x10,  %ax
+    movw    %ax,    %ds
+    movw    $0x18,  %ax
+    movw    %ax,    %es
+    popl    %eax
+
+    call    *Syscall_table(,%eax,4)
+
+    popw    %es
+    popw    %ds
+    iret

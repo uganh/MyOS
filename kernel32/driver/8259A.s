@@ -36,20 +36,12 @@ Mask_8259A:
     # Mask interrupt
     #
     # Parameters
-    #   8(%ebp): Mask code
-
-    pushl   %ebp
-    movl    %esp,   %ebp
-    pushl   %eax
-
-    movl    8(%ebp),%eax
+    #   %ax: Mask code
 
     outb    %al,    $0x21
     movb    %ah,    %al
     outb    %al,    $0xa1
 
-    popl    %eax
-    popl    %ebp
     ret
 
 Enable_8259A:

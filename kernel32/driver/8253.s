@@ -8,20 +8,15 @@ Init_8253:
     # Initialize programmable timer (0)
     #
     # Parameters
-    #   0x8(%ebp): Latch
+    #   %ax: Latch
 
-    pushl   %ebp
-    movl    %esp,   %ebp
     pushl   %eax
-
     movb    $0x36,  %al
     outb    %al,    $0x43
+    popl    %eax
 
-    movl    8(%ebp),%eax
     outb    %al,    $0x40
     movb    %ah,    %al
     outb    %al,    $0x40
 
-    popl    %eax
-    popl    %ebp
     ret
