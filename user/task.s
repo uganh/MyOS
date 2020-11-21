@@ -5,6 +5,14 @@ Task:
     movw    %ax,    %ds
     movw    %ax,    %es
 
+    # Getid
+    movl    $2,     %eax
+    int     $0x80
+
+    movl    $Format,%ebx
+    addl    $0x30,  %eax
+    movb    %eax,   5(%ebx)
+
     movb    $0x61,  %dl
 
 1:
@@ -25,15 +33,14 @@ Task:
 
     # Delay
     movl    $0,     %eax
-    movl    $1000,  %ebx
+    movl    $100,   %ebx
     int     $0x80
 
     addb    $1,     %dl
     jmp     1b
 
 Format:
-    .ascii  "Task 1: "
-    .byte   0
+    .ascii  "Task  :  "
 Format_end:
 
 Length:

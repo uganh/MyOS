@@ -1,5 +1,5 @@
     .global Init_IDTR
-    .global Delay_count
+    .global Delay_count, Task_id
 
     # Interrupt descriptor table
 IDT:
@@ -74,33 +74,73 @@ Timer_interrupt:
     decl    Delay_count
 
     subl    $1,     Clock_count
-    jne     1f
+    jne     2f
 
-    movl    $100,   Clock_count
+    movl    $1000,  Clock_count
     # Switch task
-    # Todo
-
+    cmpl    $1,     Task_id
+    jne     1f
+    movl    $2,     Task_id
+    # This instruction changes TR and LDTR
+    ljmp    $0x30,  $0
+    # This is the next instruction when switch back to task 1
+    jmp     2f
 1:
+    cmpl    $2,     Task_id
+    jne     2f
+    movl    $1,     Task_id
+    ljmp    $0x20,  $0
+
+2:
     popw    %es
     popw    %ds
     iret
 
 Clock_count:
-    .long   100
+    .long   1000
 
 Delay_count:
+    .long   0
+
+Task_id:
     .long   0
 
 Keyboard_interrupt:
     # Keyboard interrupt handler
 
+    pushw   %ds
+    pushw   %es
+
+    pushl   %ebx
+    pushl   %ecx
+
+    # Set segments
+    pushl   %eax
+    movw    $0x10,  %ax
+    movw    %ax,    %ds
+    movw    $0x18,  %ax
+    movw    %ax,    %es
+    popl    %eax
+
     call    Enable_8259A
     call    Enable_keyboard
+
+    # TODO: Bad code for compatible with task
+    pushw   %ds
+    pushw   %es
 
     movl    $Msg,   %ebx
     movl    MsgLen, %ecx
     call    Sys_print
 
+    # TODO: Bad code for compatible with task
+    addl    $4,     %esp
+
+    popl    %ecx
+    popl    %ebx
+
+    popw    %es
+    popw    %ds
     iret
 
 Msg:

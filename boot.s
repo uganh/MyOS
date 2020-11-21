@@ -77,6 +77,11 @@ Boot:
     call    Load
     testw   %ax,    %ax
     jnz     Failure
+    movw    $Task,  %dx
+    movw    $0x9e00,%bx
+    call    Load
+    testw   %ax,    %ax
+    jnz     Failure
 
     # Load kernel
     movw    $1,     %di

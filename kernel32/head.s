@@ -24,10 +24,6 @@ Kernel:
     # Set stack
     movl    $Stack_end, %esp
 
-    # movl    $Msg,   %ebx
-    # movl    MsgLen, %ecx
-    # call    Sys_print
-
     call    Init_8259A
 
     # Interrupt every 10 ms
@@ -56,8 +52,6 @@ Kernel:
     pushl   $0x07
     pushl   $0
     iret
-
-    # jmp     .
 
     # Global descriptor table
 GDT:
@@ -100,22 +94,23 @@ TSS2:
     .long   0, 0, 0, 0
     .long   0
     .long   0
-    .long   0
+    .long   0x200               # Note: Must be set
     .long   0, 0, 0, 0
-    .long   0, 0, 0, 0
-    .long   0, 0, 0, 0
+    .long   0x200, 0, 0, 0
+    .long   0, 0x07, 0x0f, 0
     .long   0, 0
     .long   0x38
     .long   0
 TSS2_end:
 
-    # Note: User code is linked with kernel now!!!
 LDT1:
     .word   0x01ff, 0x9c00, 0xfa00, 0x0040
     .word   0x01ff, 0x9c00, 0xf200, 0x0040
 LDT1_end:
 
 LDT2:
+    .word   0x01ff, 0x9e00, 0xfa00, 0x0040
+    .word   0x01ff, 0x9e00, 0xf200, 0x0040
 LDT2_end:
 
     # Task kernel stacks
@@ -127,12 +122,3 @@ Stack1_end:
 Stack2:
     .fill   64, 4, 0
 Stack2_end:
-
-    # Read-only data
-Msg:
-    .ascii  "Kernel start"
-MsgLen:
-    .long   . - Msg
-
-Task_id:
-    .long   0
