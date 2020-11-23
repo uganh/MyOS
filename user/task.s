@@ -21,7 +21,6 @@ Task:
     movb    $0x61,  %dl
 2:
     movb    %dl,    %al
-    # TODO: Different segment with kernel
     movl    $Format_end,%ebx
     movb    %al,    -1(%ebx)
 
@@ -33,7 +32,7 @@ Task:
 
     # Delay
     movl    $0,     %eax
-    movl    $100,   %ebx
+    movl    $131,   %ebx
     int     $0x80
 
     addb    $1,     %dl

@@ -22,33 +22,25 @@ Sys_print:
     #   %ebx: String pointer
     #   %ecx: Length of string
 
-    pushl   %ebp
-    movl    %esp,   %ebp
-    pushl   %esi
     pushl   %edi
     pushl   %eax
+    pushl   %ebx
+    pushl   %ecx
 
-    # TODO: How to access task segment?
-    movw    10(%ebp),   %ax
-    movw    %ax,    %ds
+    movl    $0,     %edi
 
-    movl    %ebx,   %esi
-    xorl    %edi,   %edi
-    movb    $0x2,   %al
-    cld
-0:
-    movsb
-    stosb
-    loop    0b
+1:
+    movb    %fs:(%ebx), %al
+    movb    %al,    %es:(%edi)
+    movb    $2,     %es:1(%edi)
+    incl    %ebx
+    addl    $2,     %edi
+    loop    1b
 
-    # TODO:
-    movw    $0x10,  %ax
-    movw    %ax,    %ds
-
+    popl    %ecx
+    popl    %ebx
     popl    %eax
     popl    %edi
-    popl    %esi
-    popl    %ebp
     ret
 
 Sys_getid:

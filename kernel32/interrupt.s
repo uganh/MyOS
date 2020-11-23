@@ -60,9 +60,12 @@ Timer_interrupt:
 
     pushw   %ds
     pushw   %es
+    pushw   %fs
 
     # Set segments
     pushl   %eax
+    movw    %ds,    %ax
+    movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    $0x18,  %ax
@@ -92,6 +95,7 @@ Timer_interrupt:
     ljmp    $0x20,  $0
 
 2:
+    popw    %fs
     popw    %es
     popw    %ds
     iret
@@ -110,12 +114,15 @@ Keyboard_interrupt:
 
     pushw   %ds
     pushw   %es
+    pushw   %fs
 
     pushl   %ebx
     pushl   %ecx
 
     # Set segments
     pushl   %eax
+    movw    %ds,    %ax
+    movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    $0x18,  %ax
@@ -125,20 +132,14 @@ Keyboard_interrupt:
     call    Enable_8259A
     call    Enable_keyboard
 
-    # TODO: Bad code for compatible with task
-    pushw   %ds
-    pushw   %es
-
     movl    $Msg,   %ebx
     movl    MsgLen, %ecx
     call    Sys_print
 
-    # TODO: Bad code for compatible with task
-    addl    $4,     %esp
-
     popl    %ecx
     popl    %ebx
 
+    popw    %fs
     popw    %es
     popw    %ds
     iret
@@ -153,8 +154,12 @@ Syscall_interrupt:
 
     pushw   %ds
     pushw   %es
+    pushw   %fs
 
+    # Set segments
     pushl   %eax
+    movw    %ds,    %ax
+    movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    $0x18,  %ax
@@ -163,6 +168,48 @@ Syscall_interrupt:
 
     call    *Syscall_table(,%eax,4)
 
+    popw    %fs
     popw    %es
     popw    %ds
     iret
+
+Error_interrupt:
+    # Keyboard interrupt handler
+
+    pushw   %ds
+    pushw   %es
+    pushw   %fs
+
+    pushl   %ebx
+    pushl   %ecx
+
+    # Set segments
+    pushl   %eax
+    movw    %ds,    %ax
+    movw    %ax,    %fs
+    movw    $0x10,  %ax
+    movw    %ax,    %ds
+    movw    $0x18,  %ax
+    movw    %ax,    %es
+    popl    %eax
+
+    call    Enable_8259A
+
+    movl    $Dbg,   %ebx
+    movl    DbgLen, %ecx
+    call    Sys_print
+
+    jmp     .
+
+    popl    %ecx
+    popl    %ebx
+
+    popw    %fs
+    popw    %es
+    popw    %ds
+    iret
+
+Dbg:
+    .ascii  "Debug 0x27"
+DbgLen:
+    .long   . - Dbg

@@ -18,13 +18,12 @@ Kernel:
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    %ax,    %ss
+    movw    %ax,    %fs
     movw    $0x18,  %ax
     movw    %ax,    %es
 
     # Set stack
     movl    $Stack_end, %esp
-
-    call    Init_8259A
 
     # Interrupt every 10 ms
     movw    $11931, %ax
@@ -32,10 +31,32 @@ Kernel:
 
     call    Init_keyboard
 
-    movw    $0xfffc,%ax
-    call    Mask_8259A
+    call    Init_8259A
 
     call    Init_IDTR
+
+    # Setup paging
+    # xorl    %eax,   %eax
+    # movl    $0,     %edi
+    # cld
+    # rep
+    # stosl
+    
+    # movl    %eax,   %cr3
+    # # Page directory
+    # movl    $0x1007,0x0000
+
+    # # Kernel page
+    # movl    $0x0003,0x1000 + 0 * 4
+    # movl    $0x1003,0x1000 + 1 * 4
+    # movl    $0x2003,0x1000 + 2 * 4
+    # movl    $0x3003,0x1000 + 3 * 4
+    # movl    $0x4003,0x1000 + 4 * 4
+    # movl    $0xb8003,   0x1000 + 0xb8 * 4
+
+    # Task 1 page
+    # movl    $0x5007,0x2000 + 
+
     sti
 
     # Initialize task
