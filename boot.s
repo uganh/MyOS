@@ -73,12 +73,12 @@ Boot:
     # Load task
     movw    $0,     %di
     movw    $Task,  %dx
-    movw    $0x9c00,%bx
+    movw    $0xa000,%bx
     call    Load
     testw   %ax,    %ax
     jnz     Failure
     movw    $Task,  %dx
-    movw    $0x9e00,%bx
+    movw    $0xb000,%bx
     call    Load
     testw   %ax,    %ax
     jnz     Failure

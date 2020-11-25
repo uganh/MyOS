@@ -1,11 +1,7 @@
     .code16
 
     # Enter the protected mode
-    movw    %cs,    %ax
-    movw    %ax,    %ds
-
     lgdt    GDT_48
-    
     movw    $1,     %ax
     lmsw    %ax
 
@@ -18,8 +14,6 @@ Kernel:
     movw    $0x10,  %ax
     movw    %ax,    %ds
     movw    %ax,    %ss
-    movw    %ax,    %fs
-    movw    $0x18,  %ax
     movw    %ax,    %es
 
     # Set stack
@@ -36,26 +30,31 @@ Kernel:
     call    Init_IDTR
 
     # Setup paging
-    # xorl    %eax,   %eax
-    # movl    $0,     %edi
-    # cld
-    # rep
-    # stosl
+    xorl    %eax,   %eax
+    movl    $0,     %edi
+    movl    $4096,  %ecx
+    cld
+    rep
+    stosl
     
-    # movl    %eax,   %cr3
-    # # Page directory
-    # movl    $0x1007,0x0000
-
-    # # Kernel page
-    # movl    $0x0003,0x1000 + 0 * 4
-    # movl    $0x1003,0x1000 + 1 * 4
-    # movl    $0x2003,0x1000 + 2 * 4
-    # movl    $0x3003,0x1000 + 3 * 4
-    # movl    $0x4003,0x1000 + 4 * 4
-    # movl    $0xb8003,   0x1000 + 0xb8 * 4
-
+    movl    %eax,   %cr3
+    # Page directory
+    movl    $0x1003,    0x0000
+    movl    $0x2007,    0x0040
+    movl    $0x3007,    0x0080
+    # Kernel page
+    movl    $0x7003,    0x1000 + 0x7 * 4
+    movl    $0x8003,    0x1000 + 0x8 * 4
+    movl    $0xb8003,   0x1000 + 0xb8 * 4
     # Task 1 page
-    # movl    $0x5007,0x2000 + 
+    movl    $0xa007,    0x2000
+    # Task 2 page
+    movl    $0xb007,    0x3000
+
+    # Enable paging
+    movl    %cr0,   %eax
+    xorl    $0x80000000,%eax
+    movl    %eax,   %cr0
 
     sti
 
@@ -77,18 +76,18 @@ Kernel:
     # Global descriptor table
 GDT:
     .quad   0
-    .quad   0x00409a007e001fff
-    .quad   0x004092007e001fff
-    .quad   0x0040920b80000f9f
-    .word   0x0067, 0x7e00 + TSS1, 0x8900, 0x0000
-    .word   0x000f, 0x7e00 + LDT1, 0x8200, 0x0000
-    .word   0x0067, 0x7e00 + TSS2, 0x8900, 0x0000
-    .word   0x000f, 0x7e00 + LDT2, 0x8200, 0x0000
+    .quad   0x00409a000000ffff
+    .quad   0x00cf92000000ffff
+    .quad   0x0040920b80000f9f  # Unused
+    .word   0x0067, TSS1, 0x8900, 0x0000
+    .word   0x000f, LDT1, 0x8200, 0x0000
+    .word   0x0067, TSS2, 0x8900, 0x0000
+    .word   0x000f, LDT2, 0x8200, 0x0000
 GDT_end:
 
 GDT_48:
     .word   GDT_end - GDT - 1
-    .long   0x7e00 + GDT
+    .long   GDT
 
 Stack:
     .fill   64, 4, 0
@@ -125,13 +124,13 @@ TSS2:
 TSS2_end:
 
 LDT1:
-    .word   0x01ff, 0x9c00, 0xfa00, 0x0040
-    .word   0x01ff, 0x9c00, 0xf200, 0x0040
+    .quad   0x0440fa00000001ff
+    .quad   0x0440f200000001ff
 LDT1_end:
 
 LDT2:
-    .word   0x01ff, 0x9e00, 0xfa00, 0x0040
-    .word   0x01ff, 0x9e00, 0xf200, 0x0040
+    .quad   0x0840fa00000001ff
+    .quad   0x0840f200000001ff
 LDT2_end:
 
     # Task kernel stacks

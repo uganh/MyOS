@@ -7,8 +7,8 @@ IDT:
 IDTEnd:
 
 IDT_48:
-    .word   (IDTEnd - IDT) - 1
-    .long   0x7e00 + IDT
+    .word   IDTEnd - IDT - 1
+    .long   IDT
 
 Init_IDTR:
     # Initialize IDTR
@@ -68,7 +68,6 @@ Timer_interrupt:
     movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
-    movw    $0x18,  %ax
     movw    %ax,    %es
     popl    %eax
 
@@ -125,7 +124,6 @@ Keyboard_interrupt:
     movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
-    movw    $0x18,  %ax
     movw    %ax,    %es
     popl    %eax
 
@@ -162,7 +160,6 @@ Syscall_interrupt:
     movw    %ax,    %fs
     movw    $0x10,  %ax
     movw    %ax,    %ds
-    movw    $0x18,  %ax
     movw    %ax,    %es
     popl    %eax
 
@@ -172,44 +169,3 @@ Syscall_interrupt:
     popw    %es
     popw    %ds
     iret
-
-Error_interrupt:
-    # Keyboard interrupt handler
-
-    pushw   %ds
-    pushw   %es
-    pushw   %fs
-
-    pushl   %ebx
-    pushl   %ecx
-
-    # Set segments
-    pushl   %eax
-    movw    %ds,    %ax
-    movw    %ax,    %fs
-    movw    $0x10,  %ax
-    movw    %ax,    %ds
-    movw    $0x18,  %ax
-    movw    %ax,    %es
-    popl    %eax
-
-    call    Enable_8259A
-
-    movl    $Dbg,   %ebx
-    movl    DbgLen, %ecx
-    call    Sys_print
-
-    jmp     .
-
-    popl    %ecx
-    popl    %ebx
-
-    popw    %fs
-    popw    %es
-    popw    %ds
-    iret
-
-Dbg:
-    .ascii  "Debug 0x27"
-DbgLen:
-    .long   . - Dbg

@@ -27,12 +27,12 @@ Sys_print:
     pushl   %ebx
     pushl   %ecx
 
-    movl    $0,     %edi
+    movl    $0xb8000,   %edi
 
 1:
     movb    %fs:(%ebx), %al
-    movb    %al,    %es:(%edi)
-    movb    $2,     %es:1(%edi)
+    movb    %al,    (%edi)
+    movb    $2,     1(%edi)
     incl    %ebx
     addl    $2,     %edi
     loop    1b
