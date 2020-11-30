@@ -75,37 +75,12 @@ Timer_interrupt:
 
     decl    Delay_count
 
-    subl    $1,     Clock_count
-    jne     2f
-
-    movl    $1000,  Clock_count
-    # Switch task
-    cmpl    $1,     Task_id
-    jne     1f
-    movl    $2,     Task_id
-    # This instruction changes TR and LDTR
-    ljmp    $0x30,  $0
-    # This is the next instruction when switch back to task 1
-    jmp     2f
-1:
-    cmpl    $2,     Task_id
-    jne     2f
-    movl    $1,     Task_id
-    ljmp    $0x20,  $0
-
-2:
     popw    %fs
     popw    %es
     popw    %ds
     iret
 
-Clock_count:
-    .long   1000
-
 Delay_count:
-    .long   0
-
-Task_id:
     .long   0
 
 Keyboard_interrupt:
@@ -114,9 +89,6 @@ Keyboard_interrupt:
     pushw   %ds
     pushw   %es
     pushw   %fs
-
-    pushl   %ebx
-    pushl   %ecx
 
     # Set segments
     pushl   %eax
@@ -130,22 +102,34 @@ Keyboard_interrupt:
     call    Enable_8259A
     call    Enable_keyboard
 
-    movl    $Msg,   %ebx
-    movl    MsgLen, %ecx
-    call    Sys_print
+    # Switch task
+    cmpb    $49,    Key_ascii
+    je      1f
+    cmpb    $50,    Key_ascii
+    je      2f
+    jmp     3f
+1:
+    cmpl    $1,     Task_id
+    je      3f
+    movl    $1,     Task_id
+    # Change TR and LDTR
+    ljmp    $0x20,  $0
+    # This is the next instruction when switch back to task 1
+    jmp     3f
+2:
+    cmpb    $2,     Task_id
+    je      3f
+    movl    $2,     Task_id
+    ljmp    $0x30,  $0
 
-    popl    %ecx
-    popl    %ebx
-
+3:
     popw    %fs
     popw    %es
     popw    %ds
     iret
 
-Msg:
-    .ascii  "233"
-MsgLen:
-    .long   . - Msg
+Task_id:
+    .long   0
 
 Syscall_interrupt:
     # System call interrupt handler

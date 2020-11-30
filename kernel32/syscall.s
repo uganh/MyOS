@@ -28,11 +28,11 @@ Sys_print:
     pushl   %ecx
 
     movl    $0xb8000,   %edi
+    movw    $0x0200,%ax
 
 1:
     movb    %fs:(%ebx), %al
-    movb    %al,    (%edi)
-    movb    $2,     1(%edi)
+    movw    %ax,    (%edi)
     incl    %ebx
     addl    $2,     %edi
     loop    1b
